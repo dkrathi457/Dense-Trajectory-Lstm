@@ -92,8 +92,10 @@ def load_training_data(training_data_list, classes, minvalue):
         filename = training_data_list.iloc[i][0]
         print filename
         filepath_file = os.path.join("/home/cis/Desktop/LStm Dense Trajectories/Dense Trajectories" , filename)
-        x= pd.read_csv(filepath_file, sep = "\t", header =None) 
+        x= pd.read_csv(filepath_file, sep = "\t", header =None)
+        x = x.iloc[:,10:436]
         x_sample = x.iloc[random.sample(x.index, minvalue)] 
+        x_sample.sort_index(inplace=True)
         x = x_sample.values
         label = make_label_data(filename, classes)
         X.append(x)
@@ -109,8 +111,10 @@ def load_testing_data(testing_data_list, classes, minvalue):
         filename = testing_data_list.iloc[i][0]
         print filename
         filepath_file = os.path.join("/home/cis/Desktop/LStm Dense Trajectories/Dense Trajectories" , filename)
-        x= pd.read_csv(filepath_file, sep = "\t", header =None) 
+        x= pd.read_csv(filepath_file, sep = "\t", header =None)
+        x = x.iloc[:,10:436]
         x_sample = x.iloc[random.sample(x.index, minvalue)] 
+        x_sample.sort_index(inplace=True)
         x = x_sample.values
         label = make_label_data(filename, classes)
         X.append(x)
@@ -125,11 +129,12 @@ X_train, Y_train = load_training_data(training_data_list, classes, minvalue)
 X_test , Y_test = load_testing_data(testing_data_list, classes, minvalue)
 
 
+        
 
 model = Sequential()
-model.add(LSTM(437, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])))
+model.add(LSTM(200, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])))
 model.add(Flatten())
-model.add(Dense(200, activation='relu'))
+model.add(Dense(100, activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(6, activation='softmax'))
 
@@ -138,4 +143,4 @@ model.compile(loss='categorical_crossentropy', optimizer= optimizer,
                            metrics = ['accuracy'] )
 #train_x.shape[0]
 #train_x_t = train_x.reshape(train_x.shape[0], 1, train_x.shape[1])
-model.fit(X_train, Y_train, batch_size=32, epochs=70, validation_data=(X_test, Y_test), verbose=1)
+model.fit(X_train, Y_train, batch_size=32, epochs=100, validation_data=(X_test, Y_test), verbose=1, callbacks=[checkpointer, tb, early_stopper, csv_logger])
