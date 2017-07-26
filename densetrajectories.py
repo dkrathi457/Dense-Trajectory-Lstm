@@ -14,6 +14,25 @@ from keras.optimizers import Adam
 import random
 import os
 
+
+checkpointer = ModelCheckpoint(
+        filepath='/home/cis/Desktop/LStm Dense Trajectories/data/checkpoints/' + 'dt'+ \
+            '.{epoch:03d}-{val_loss:.3f}.hdf5',
+        verbose=1,
+        save_best_only=True)
+
+# Helper: TensorBoard
+tb = TensorBoard(log_dir='/home/cis/Desktop/LStm Dense Trajectories/data/logs')
+
+# Helper: Stop when we stop learning.
+early_stopper = EarlyStopping(patience=10)
+
+# Helper: Save results.
+timestamp = time.time()
+csv_logger = CSVLogger('/home/cis/Desktop/LStm Dense Trajectories/data/logs/'+ '-' + 'training-dt' + \
+        str(timestamp) + '.log')
+
+
 filepath = "/home/cis/Desktop/LStm Dense Trajectories/training.txt"
 training_data_list = pd.read_csv(filepath, sep=" ", header=None)
 
@@ -105,3 +124,18 @@ X_train, Y_train = load_training_data(training_data_list, classes, minvalue)
 
 X_test , Y_test = load_testing_data(testing_data_list, classes, minvalue)
 
+
+
+model = Sequential()
+model.add(LSTM(437, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])))
+model.add(Flatten())
+model.add(Dense(200, activation='relu'))
+model.add(Dropout(0.5))
+model.add(Dense(6, activation='softmax'))
+
+optimizer = Adam(lr=1e-6)
+model.compile(loss='categorical_crossentropy', optimizer= optimizer,
+                           metrics = ['accuracy'] )
+#train_x.shape[0]
+#train_x_t = train_x.reshape(train_x.shape[0], 1, train_x.shape[1])
+model.fit(X_train, Y_train, batch_size=32, epochs=70, validation_data=(X_test, Y_test), verbose=1)
